@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Receipt Vision Extractor</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+      table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+      th, td { border-bottom: 1px solid #ddd; padding: 0.35rem 0.5rem; text-align: left; }
+      .warn { color: #8a4b00; }
+      .error { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <h1>Receipt Vision Extractor</h1>
+    <p>Upload a receipt (JPEG, PNG, WebP or PDF, up to 5 MB).</p>
+    <form id="upload">
+      <input id="file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required />
+      <button type="submit">Extract</button>
+    </form>
+    <p id="status" role="status"></p>
+    <section id="result"></section>
+    <script src="app.js"></script>
+  </body>
+</html>
