@@ -16,11 +16,25 @@ export interface AppDeps {
   extractor: Extractor;
   corsOrigins: string[];
   logger: Logger;
+  /** Requests per minute; defaults to 120 overall and 20 for uploads. */
+  rateLimits?: { read: number; upload: number };
 }
 
 const PUBLIC_DIR = fileURLToPath(new URL("../public", import.meta.url));
 
+const limiter = (limit: number) =>
+  rateLimit({
+    windowMs: 60_000,
+    limit,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    handler: (_req, res) => {
+      res.status(429).json({ error: { code: "rate_limited", message: "Too many requests." } });
+    },
+  });
+
 export function createApp(deps: AppDeps): Express {
+  const limits = deps.rateLimits ?? { read: 120, upload: 20 };
   const app = express();
   app.disable("x-powered-by");
 
@@ -40,14 +54,15 @@ export function createApp(deps: AppDeps): Express {
 
   app.use(helmet());
   app.use(cors({ origin: deps.corsOrigins }));
-  app.use(rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: "draft-8", legacyHeaders: false }));
 
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok" });
   });
 
+  app.use(limiter(limits.read));
+
   // Each upload is a paid vision call, so it gets a tighter budget than reads.
-  app.post("/v1/receipts", rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: "draft-8", legacyHeaders: false }));
+  app.post("/v1/receipts", limiter(limits.upload));
   app.use("/v1/receipts", receiptsRouter(deps));
   app.use("/v1/insights", insightsRouter(deps));
   app.use(express.static(PUBLIC_DIR));
